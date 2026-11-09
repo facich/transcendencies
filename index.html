@@ -322,6 +322,20 @@ img{display:block}
   background:var(--bg-highest);border:1px solid var(--divider);padding:10px 18px;
   font-size:13px;color:var(--text);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
 .toast-title{font-weight:700;margin-bottom:3px}
+
+/* Панель уведомлений (Discord-стиль) */
+.notif-panel{position:fixed;top:70px;right:16px;width:340px;max-width:calc(100vw - 32px);
+  background:var(--bg-high);border:1px solid var(--divider);border-radius:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,.65);z-index:130;overflow:hidden}
+.notif-head{padding:12px 16px 10px;font-size:12px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--text-secondary);border-bottom:1px solid var(--divider)}
+.notif-item{display:flex;gap:10px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--divider)}
+.notif-item:last-child{border-bottom:none}
+.notif-item .avatar{width:36px;height:36px;flex:none}
+.notif-title{font-size:14px;font-weight:600;color:var(--text)}
+.notif-time{font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px}
+.notif-text{font-size:13px;color:var(--text-secondary);margin-top:2px}
+.site-name .avatar{margin-right:10px}
 .heart-fx{position:fixed;z-index:98;font-size:28px;pointer-events:none;
   animation:heartUp 1s ease-out forwards}
 @keyframes heartUp{
@@ -355,6 +369,9 @@ img{display:block}
   <button class="tb-icon" id="notif-btn" aria-label="Уведомления"><span class="tb-badge">3</span></button>
   <a class="avatar" id="avatar-btn" aria-label="Профиль"></a>
 </header>
+
+<!-- Панель уведомлений (Discord-стиль) -->
+<div class="notif-panel" id="notif-panel" hidden></div>
 
 <!-- ================= SIDENAV + КОНТЕНТ ================= -->
 <div class="sidenav-backdrop" id="sidenav-backdrop"></div>
@@ -458,6 +475,13 @@ const SITE = {
   title: "Transcendencies · Transcendencies Vault", // вкладка
   footerTitle: "Transcendencies Vault — карточка для Discord. Раздел 18+ — предупреждение, за ним ничего страшного.",
 };
+
+/* Discord-интеграция (пока ждём is-a.dev): URL вебхука из своего канала Discord.
+   Как сделать: Discord → свой сервер → любой канал → ⚙ → Интеграции → Webhooks
+   → New Webhook → Copy Webhook URL → вставить сюда в кавычки.
+   Тогда каждое «иди нахуй» из футера прилетит и в твой канал Discord.
+   Пусто "" = только уведомления на сайте. Подробности в GUIDE.md. */
+const DISCORD_WEBHOOK = "";
 
 const PROFILE = {
   user: "Transcendencies",
@@ -694,7 +718,7 @@ function avatarImg(){
 }
 
 function renderChrome(){
-  $("#logo").innerHTML = SITE.name;
+  $("#logo").innerHTML = '<span class="avatar">' + avatarImg() + "</span>" + SITE.name;
   document.title = SITE.title;
   $("#sidenav-btn").innerHTML = icon("menu");
   $("#notif-btn").insertAdjacentHTML("afterbegin", icon("notifications"));
@@ -716,7 +740,7 @@ function renderChrome(){
 
   $("#footer-title").textContent = SITE.footerTitle;
   $("#footer-links").innerHTML = FOOTER_LINKS.map(l =>
-    '<a href="#" data-toast="иди нахуй" data-toast-title="Transcendencies">' + esc(l) + "</a>").join("");
+    '<a href="#" data-notif="1">' + esc(l) + "</a>").join("");
 
   $("#search-box").insertAdjacentHTML("afterbegin", icon("search"));
   renderProfile();
@@ -1144,8 +1168,53 @@ $("#logo").addEventListener("click", (e) => {
   $("#search-input").value = "";
   if (location.hash) location.hash = ""; else route();
 });
-$("#notif-btn").addEventListener("click", () => toast("Уведомления: 3 непрочитанных мема (демо)"));
-$("#avatar-btn").addEventListener("click", () => toast("Профиль — псевдо-ссылка"));
+/* ---------- Уведомления (колокольчик, Discord-стиль) ----------
+   Футер-кнопки (NO Contact us / Terms of Service / MDMA / Discord)
+   добавляют сюда «Transcendencies: иди нахуй» + шлют в Discord (если есть вебхук). */
+const NOTIFS = [
+  { text: "иди нахуй", when: "now" },
+  { text: "иди нахуй", when: "12m" },
+  { text: "иди нахуй", when: "1h" },
+];
+function renderNotifs(){
+  const badge = document.querySelector(".tb-badge");
+  if (badge){ badge.textContent = NOTIFS.length; badge.style.display = NOTIFS.length ? "" : "none"; }
+  $("#notif-panel").innerHTML =
+    '<div class="notif-head">Notifications</div>' +
+    NOTIFS.map(n =>
+      '<div class="notif-item">' +
+        '<span class="avatar">' + avatarImg() + "</span>" +
+        '<div><div class="notif-title">Transcendencies<span class="notif-time">' + esc(n.when) + "</span></div>" +
+        '<div class="notif-text">' + esc(n.text) + "</div></div>" +
+      "</div>").join("");
+}
+function pushNotif(text){
+  NOTIFS.unshift({ text: text, when: "now" });
+  renderNotifs();
+  $("#notif-panel").hidden = false;
+  if (DISCORD_WEBHOOK){
+    fetch(DISCORD_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "Transcendencies",
+        avatar_url: location.origin + "/avatar.jpg",
+        content: text
+      })
+    }).catch(() => {});
+  }
+}
+$("#notif-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const panel = $("#notif-panel");
+  panel.hidden = !panel.hidden;
+  renderNotifs();
+});
+document.addEventListener("click", (e) => {
+  const panel = $("#notif-panel");
+  if (!panel.hidden && !panel.contains(e.target) && !e.target.closest("#notif-btn")) panel.hidden = true;
+});
+$("#avatar-btn").addEventListener("click", () => toast("иди нахуй", "Transcendencies"));
 $("#search-input").addEventListener("input", (e) => {
   state.query = e.target.value.trim();
   if (!$("#view-post").hidden) location.hash = "";
@@ -1159,10 +1228,10 @@ document.addEventListener("click", (e) => {
   toast(b.dataset.toast, b.dataset.toastTitle || null);
 });
 $("#footer-links").addEventListener("click", (e) => {
-  const a = e.target.closest("a[data-stub]");
+  const a = e.target.closest("a[data-notif]");
   if (!a) return;
   e.preventDefault();
-  toast(a.dataset.stub + " — псевдо-ссылка");
+  pushNotif("иди нахуй");
 });
 
 /* ---------- Старт ---------- */
