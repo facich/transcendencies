@@ -718,7 +718,7 @@ function avatarImg(){
 }
 
 function renderChrome(){
-  $("#logo").innerHTML = '<span class="avatar">' + avatarImg() + "</span>" + SITE.name;
+  $("#logo").innerHTML = SITE.name;
   document.title = SITE.title;
   $("#sidenav-btn").innerHTML = icon("menu");
   $("#notif-btn").insertAdjacentHTML("afterbegin", icon("notifications"));
@@ -1231,7 +1231,7 @@ $("#footer-links").addEventListener("click", (e) => {
   const a = e.target.closest("a[data-notif]");
   if (!a) return;
   e.preventDefault();
-  pushNotif("иди нахуй");
+  toast("иди нахуй", "Transcendencies"); // как у Hot в боковом меню
 });
 
 /* ---------- Старт ---------- */

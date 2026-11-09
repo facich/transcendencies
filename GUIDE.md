@@ -20,43 +20,55 @@
 | Треки (вкладка History) | `TRACKS` | строка на трек; ID клипа — после `watch?v=` в ютуб-ссылке: `img: "https://i.ytimg.com/vi/ID/hqdefault.jpg"`, `src: "https://www.youtube.com/watch?v=ID"` |
 | Плейлисты | `PLAYLISTS` | `{ name: "имя", items: 5, likes: 0, comments: 0, members: 0 }` |
 | Цвета сайта | `:root` в самом верху файла | `--toolbar` = фиолетовая шапка/подвал, `--primary` = акцент, `--tag-*` = цвета тегов |
-| **Discord вебхук** | `DISCORD_WEBHOOK` | ссылка из Discord (см. ниже) |
 
 Та же шпаргалка вынесена блоком наверх самого `index.html` (КАСТОМИЗАЦИЯ).
 
 ## Как работают кнопки и уведомления
 
-- **Колокольчик** (справа сверху) = панель уведомлений, как в Discord.
-- Кнопки в **подвале** (NO Contact us / Terms of Service / MDMA / Discord) —
-  добавляют «Transcendencies: иди нахуй» в колокольчик (бейдж +1).
-- Боковое меню (Home, Best posts, Hot, …), аватар в шапке —
-  тост «Transcendencies: иди нахуй».
+- **Колокольчик** (справа сверху) = панель уведомлений, как в Discord
+  (список «Transcendencies: иди нахуй», бейдж со счётчиком).
+- **Все кнопки** — подвал (NO Contact us / Terms of Service / MDMA / Discord),
+  боковое меню (Home, Best posts, Hot, …), аватар в шапке —
+  тост «**Transcendencies**: иди нахуй».
 - **Upgrade Account** (внизу бокового меню) — открывает
   [donorschoose.org](https://www.donorschoose.org/) (благотворительность).
 - Пост в Bookmarks — не кликабельный; коммент виден прямо под постом.
-
-## Привязка к Discord (пока ждём is-a.dev)
-
-Адрес для профиля Discord прямо сейчас: **`https://facich.github.io/transcendencies/`**
-(SOAP-карточка подтянется сама из preview.png).
-
-Чтобы «иди нахуй» прилетало ещё и в твой канал Discord:
-1. Discord → свой сервер → любой канал → ⚙ (настройки канала) →
-   **Интеграции → Webhooks → New Webhook**.
-2. Имя вебхука: `Transcendencies`, аватар — свою кошку.
-3. **Copy Webhook URL**.
-4. В `index.html` (БЛОК 1) вставить в кавычки: `const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/…";`
-
-После этого каждый клик по кнопке в подвале = сообщение
-**Transcendencies: иди нахуй** в твоём канале. Пока вебхук не вставлен —
-уведомления работают только на сайте.
 
 ## Домен
 
 - Сейчас: `https://facich.github.io/transcendencies/`
 - Потом: `transcendencies.is-a.dev` — PR #60585 ждёт мерджа мейнтером.
   После мерджа: Settings → Pages → Custom domain: `transcendencies.is-a.dev`
-  + галка Enforce HTTPS. Вебхук после смены домена менять не надо.
+  + галка Enforce HTTPS.
+
+## Домен в профиле Discord (верификация)
+
+Окно «Подключите ваш домен» в Discord — это верификация домена: Discord
+проверяет, что домен твой, и потом показывает его в профиле.
+Для is-a.dev это делается через TXT-запись (официальный гайд:
+docs.is-a.dev/guides/discord-verification):
+
+1. Discord → **Settings → Connections → View more** → кнопка-глобус (домен) →
+   ввести `transcendencies.is-a.dev` → **Далее** → скопировать
+   **verification string** (TXT-строку).
+2. В форке `facich/register` добавить файл `domains/_discord.transcendencies.json`:
+   ```json
+   {
+       "owner": {
+           "username": "facich"
+       },
+       "records": {
+           "TXT": "сюда-verification-string"
+       }
+   }
+   ```
+3. Pull request (как в прошлый раз, compare across forks) → ждём мердж.
+4. Discord → снова «Подключите ваш домен» → `transcendencies.is-a.dev` →
+   **Verify** (если «Unable to verify» — подождать до 24 ч, DNS распространяется).
+5. Домен появится в профиле Discord.
+
+Важно: проверка пройдёт только после того, как PR (и основной PR #60585)
+промерджит мейнтер is-a.dev — до этого домен физически не существует.
 
 ## Как применить изменения
 
