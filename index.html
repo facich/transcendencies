@@ -468,9 +468,9 @@ const TAG_CATEGORY_LABELS = {
    published — "1 year ago"
    date      — дата публикации полностью
    source    — ссылка-источник
-   tags      — короткие фразы, две формы:
-               ["фраза 1", "фраза 2"]                — просто строки (синий "general")
-               [{ t: "вафля кот", c: "character" }]  — с категорией-цветом
+   tags      — короткие фразы:
+               "фраза"              — синий тег
+               "фраза=pink"         — цветной: pink / green / red / teal / gray
                первые 10 видны, дальше «Show more (+N)»; клик по тегу = страница тега
    comments  — [{ user, text, when, likes }] */
 const POSTS = [
@@ -532,7 +532,15 @@ const TRACKS = [
 
 /* --- Теги: разрешаем оба формата.
    "короткая фраза" → общий тег (general); объект { t, c } → со своей категорией-цветом --- */
-POSTS.forEach(p => { p.tags = p.tags.map(t => typeof t === "string" ? { t, c: "general" } : t); });
+/* Теги: "слово" = синий; "слово=pink/green/red/teal/gray" = цветной; { t, c } = старый формат */
+const TAG_COLORS = { pink: "copyright", green: "character", red: "artist", blue: "general", teal: "meta", gray: "system" };
+POSTS.forEach(p => {
+  p.tags = p.tags.map(t => {
+    if (typeof t !== "string") return t;
+    const [name, color] = t.split("=");
+    return { t: name.trim(), c: TAG_COLORS[color ? color.trim() : ""] || "general" };
+  });
+});
 
 function tagCount(name){ return POSTS.filter(p => p.tags.some(t => t.t === name)).length; }
 
