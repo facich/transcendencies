@@ -159,11 +159,12 @@ img{display:block}
 .featured-grid{display:grid;grid-template-columns:1fr 1.9fr;gap:12px;margin-bottom:12px}
 .post-card--big{grid-column:2;grid-row:1/3;display:flex;flex-direction:column}
 .post-card--big .card-media{aspect-ratio:auto;flex:1;min-height:220px}
-.featured-grid--solo{grid-template-columns:1fr}
+.featured-grid--solo{grid-template-columns:1fr;max-width:820px;margin-left:auto;margin-right:auto}
 .featured-grid--solo .post-card--big{grid-column:auto;grid-row:auto}
-.featured-grid--solo .post-card--big .card-media{min-height:360px}
+.featured-grid--solo .post-card--big .card-media{aspect-ratio:16/9;min-height:0}
 
 /* теги сразу на большой карточке (как на странице поста) */
+.card-desc{font-size:14px;color:var(--text-secondary);margin-top:10px;line-height:1.4}
 .card-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .card-tags .chip{height:30px}
 .card-tags .chip-part{padding:0 12px}
@@ -238,6 +239,7 @@ img{display:block}
   color:var(--text);padding:6px 12px;border-radius:8px}
 .post-nav-link .icon{font-size:16px}
 .post-nav-link:hover{background:var(--bg-high)}
+.post-desc{font-size:14px;line-height:1.5;margin-top:14px}
 .post-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:14px}
 .post-tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
 .post-meta{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:18px;
@@ -327,7 +329,7 @@ img{display:block}
   .featured-grid{grid-template-columns:1fr}
   .post-card--big{grid-column:auto;grid-row:auto;min-height:0}
   .post-card--big .card-media{aspect-ratio:4/3;min-height:0}
-  .featured-grid--solo .post-card--big .card-media{min-height:260px;aspect-ratio:auto}
+  .featured-grid--solo .post-card--big .card-media{min-height:0;aspect-ratio:16/9}
   .track-thumb{width:170px}
   .track-title{font-size:14px}
   .post-media{min-height:220px}
@@ -415,8 +417,9 @@ img{display:block}
       null                  = серая заглушка
       "https://…/foto.jpg"  = внешняя ссылка на картинку
       "posts/foto.jpg"      = свой файл (положи в папку posts/ в репо)
-   6) ПОСТ: название / ♥ / просмотры / ссылка
-      POSTS[0].title / .rating / .views / .source
+   6) ПОСТ: название / описание / ♥ / просмотры / ссылка
+      POSTS[0].title / .desc / .rating / .views / .source
+      (.views — число ИЛИ текст в кавычках, напр. "многа")
    7) ТЕГИ ............. POSTS[0].tags — каждое слово в кавычках = тег:
       "femdom"        → синий (по умолчанию)
       "femdom=pink"   → розовый
@@ -486,6 +489,7 @@ const TAG_CATEGORY_LABELS = {
    Поля:
    id        — уникальный номер
    title     — название (видео-посты помечай video)
+   desc      — описание поста (пусто = не показывается)
    img       — ссылка на картинку; null = SVG-заглушка
    video     — null или длительность "1:30" (покажет бейдж ▶)
    nsfw      — true = пост «18+»: blur + плашка 18+, гейт «да/нет»,
@@ -506,6 +510,7 @@ const POSTS = [
        Картинку (пока SVG-заглушка) вставь в img. */
     id: 1010,
     title: "близость",
+    desc: "",  // ← описание поста: напиши текст в кавычках (пока пусто = не показывается)
     img: "post.jpg",
     video: null,
     nsfw: false,
@@ -831,6 +836,7 @@ function cardHtml(p, big){
       '<span class="stat-like">' + icon("favorite") + fmtK(p.rating) + "</span>" +
       "<span>" + icon("comment") + p.comments.length + "</span>" +
     "</div>" +
+    (big && p.desc ? '<div class="card-desc">' + esc(p.desc) + "</div>" : "") +
     (big ? '<div class="card-tags">' + p.tags.map(t =>
       '<span class="chip chip--tag-' + esc(t.c) + '"><span class="chip-part"><span class="label">' + esc(t.t) + "</span></span></span>").join("") + "</div>" : "") +
     "</a>";
@@ -889,6 +895,8 @@ function renderPost(p){
       '<button class="chip chip--tonal" id="more-btn" type="button"><span class="chip-part"><span class="icon">' +
         icon("more_horiz") + "</span></span></button>" +
     "</div>" +
+    /* описание (если заполнено) */
+    (p.desc ? '<div class="post-desc">' + esc(p.desc) + "</div>" : "") +
     /* теги */
     '<div class="post-tags" id="post-tags">' + tagChips(p, state.expanded) + "</div>" +
     /* мета */
