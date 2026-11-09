@@ -1,0 +1,46 @@
+# Автообновление аватара карточки (полностью независимый вариант).
+#
+# Как включить (однажды):
+#   1. Вставь свой Discord ID (число) ниже в строку DISCORD_ID.
+#   2. В index.html замени ссылку unavatar на локальный файл:
+#        avatar: "avatar.png",
+#   3. Плей-лист: файл лежит рядом, GH Pages отдаст его сам.
+#
+# Дальше workflow сам каждые 6 часов скачивает текущую аву с Discord
+# (через unavatar.io) и, если она изменилась — коммитит и пушит.
+# Запустить вручную: GitHub → Actions → avatar-sync → Run workflow.
+name: avatar-sync
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # каждые 6 часов
+  workflow_dispatch: {}   # кнопка «Run workflow» вручную
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download current Discord avatar
+        run: |
+          set -e
+          DISCORD_ID="PASTE_YOUR_DISCORD_ID"
+          curl -sfL "https://unavatar.io/discord/${DISCORD_ID}?fallback=false" -o avatar_new.png \
+            || { echo "avatar fetch failed (ID? сервис?) — пропускаю"; exit 0; }
+          # убрал лишнее
+          file avatar_new.png
+
+      - name: Commit if changed
+        run: |
+          set -e
+          if [ -f avatar.png ] && cmp -s avatar.png avatar_new.png; then
+            echo "avatar unchanged — nothing to do"
+            exit 0
+          fi
+          mv avatar_new.png avatar.png
+          git config user.name "avatar-sync[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add avatar.png
+          git commit -m "avatar: sync from Discord"
+          git push

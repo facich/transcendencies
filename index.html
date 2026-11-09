@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcendencies · Transcendencies Vault</title>
+<!-- OGP: Discord и другие мессенджеры берут отсюда карточку превью ссылки.
+     preview.png (1200×630) и favicon.png лежат рядом. -->
+<meta property="og:site_name" content="Transcendencies Vault">
+<meta property="og:title" content="Transcendencies · Transcendencies Vault">
+<meta property="og:description" content="Карточка Transcendencies для Discord: пост, треки, комментарии">
+<meta property="og:type" content="website">
+<meta property="og:image" content="preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+/* ============================================================
+   СТИЛИ — 1:1 по дизайн-системе эталона (R34 Vault, тёмная тема).
+   Токены выцелены из сохранённого CSS референса:
+   background #121414 · surfaces #1e2020/#282a2b/#333535 ·
+   toolbar/footer #721199 · primary #ebb2ff · accent #57de9e
+   ============================================================ */
+:root{
+  --bg:#121414;
+  --bg-lowest:#0d0e0f;
+  --bg-low:#1a1c1c;
+  --bg-surface:#1e2020;
+  --bg-high:#282a2b;
+  --bg-highest:#333535;
+  --text:#e2e2e2;
+  --text-secondary:rgba(226,226,226,.75);
+  --toolbar:#721199;
+  --primary:#ebb2ff;
+  --accent:#57de9e;
+  --selected:rgba(235,178,255,.16);
+  --divider:rgba(226,226,226,.12);
+  --tag-copyright:#a30650;
+  --tag-character:#285e14;
+  --tag-artist:#a80616;
+  --tag-general:#3649ac;
+  --tag-meta:#005d52;
+  --tag-system:#455367;
+  --liked:rgb(49,196,141);
+  --disliked:rgb(255,82,82);
+  --premium:#f0b90b;
+  --toolbar-h:64px;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.5 Roboto,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+img{display:block}
+[hidden]{display:none !important}
+.icon{width:1em;height:1em;vertical-align:-0.125em;fill:currentColor;flex-shrink:0}
+
+/* ================= TOOLBAR (64px, фиолетовый) ================= */
+.toolbar{position:sticky;top:0;z-index:40;height:var(--toolbar-h);
+  background:var(--toolbar);display:flex;align-items:center;gap:4px;
+  padding:0 8px;color:#fff}
+.tb-icon{position:relative;width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
+.tb-icon:hover{background:rgba(255,255,255,.12)}
+.tb-badge{position:absolute;top:2px;right:0;min-width:17px;height:17px;padding:0 4px;
+  border-radius:999px;background:var(--primary);color:#520071;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.site-name{font-size:22px;letter-spacing:.25px;color:#fff;height:var(--toolbar-h);
+  line-height:var(--toolbar-h);white-space:nowrap}
+.site-name:hover{text-decoration:none}
+.site-name span{font-weight:300}
+.flex-spacer{flex:1}
+.avatar{width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--bg-highest);flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+
+/* ================= SIDENAV (overlay) ================= */
+.sidenav-backdrop{position:fixed;inset:0;z-index:49;background:rgba(0,0,0,.32);
+  opacity:0;pointer-events:none;transition:opacity .2s}
+.sidenav-backdrop.open{opacity:1;pointer-events:auto}
+.sidenav{position:fixed;top:var(--toolbar-h);bottom:0;left:0;z-index:50;width:300px;
+  background:var(--bg-surface);transform:translateX(-102%);transition:transform .25s ease;
+  display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,.4)}
+.sidenav.open{transform:translateX(0)}
+.sidenav-user{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--divider)}
+.sidenav-user .avatar{width:40px;height:40px}
+.sidenav-username{font-size:14px;font-weight:700}
+.sidenav-sub{font-size:12px;color:var(--text-secondary)}
+.sidenav-nav{flex:1;overflow:auto;padding:8px}
+.sidenav-item{display:flex;align-items:center;gap:16px;width:100%;height:42px;
+  padding:0 14px;border-radius:8px;font-size:14px;text-align:left;color:var(--text)}
+.sidenav-item .icon{font-size:20px;color:var(--text-secondary)}
+.sidenav-item:hover{background:rgba(226,226,226,.06)}
+.sidenav-item.active{background:var(--selected);color:var(--primary)}
+.sidenav-item.active .icon{color:var(--primary)}
+.sidenav-badge{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;
+  background:var(--primary);color:#520071;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center}
+.sidenav-bottom{padding:8px;border-top:1px solid var(--divider)}
+.sidenav-bottom .sidenav-item:last-child{margin-bottom:8px}
+.sidenav-item.premium{color:var(--premium)}
+.sidenav-item.premium .icon{color:var(--premium)}
+
+/* ================= КАРКАС СТРАНИЦЫ ================= */
+.page-content{min-height:calc(100vh - var(--toolbar-h));padding-bottom:24px}
+.page-container{max-width:1280px;margin:0 auto;padding:0 24px}
+.section{margin-top:28px}
+.section-title{font-size:18px;font-weight:500;margin:0 0 12px}
+.section-title .count{color:var(--text-secondary);font-weight:400;font-size:14px}
+.section-title .chip{vertical-align:-8px;margin:0 10px 0 2px}
+
+/* ================= ЧИПЫ (пills 36px, как у эталона) ================= */
+.chip{display:inline-flex;align-items:center;height:36px;border-radius:999px;
+  background:var(--bg-highest);color:var(--text);overflow:hidden;
+  transition:filter .15s;vertical-align:middle}
+.chip:hover{filter:brightness(1.2)}
+.chip-part{display:flex;align-items:center;height:100%;padding:0 16px;position:relative}
+.chip-part .label{font-size:14px;line-height:14px}
+.chip-part .icon{font-size:18px}
+.chip-part .icon + .label{margin-left:8px}
+.chip--small{height:32px}
+.chip--small .chip-part{padding:0 12px}
+.chip--small .label{font-size:13px}
+.chip--tag-copyright{background:var(--tag-copyright)}
+.chip--tag-character{background:var(--tag-character)}
+.chip--tag-artist{background:var(--tag-artist)}
+.chip--tag-general{background:var(--tag-general)}
+.chip--tag-meta{background:var(--tag-meta)}
+.chip--tag-system{background:var(--tag-system)}
+.chip--tag-copyright .label,.chip--tag-character .label,.chip--tag-artist .label,
+.chip--tag-general .label,.chip--tag-meta .label,.chip--tag-system .label{color:#fff}
+.chip--tonal{height:32px;background:var(--bg-highest)}
+.chip--tonal .label{font-size:13px;color:var(--text)}
+.chip--tonal .icon{font-size:16px;color:var(--text-secondary)}
+.chip--liked .icon{color:var(--liked)}
+.chip--ghost{background:transparent;border:1px solid var(--divider);height:32px}
+.chip--ghost .label{font-size:13px;color:var(--text-secondary)}
+
+/* ================= HOME: визитка + поиск + сетка ================= */
+.home-wrap{padding-top:20px}
+/* карточка профиля (1:1 по референсу u/страницы) */
+.profile-card2{max-width:620px;margin:0 auto 20px;background:var(--bg-surface);
+  border-radius:16px;padding:20px 22px 0}
+.pc-top{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.avatar-xl{width:104px;height:104px}
+  border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text)}
+.profile-name2{font-size:20px;font-weight:700}
+.profile-handle{font-size:13px;color:var(--text-secondary);margin-top:1px}
+.profile-role{font-size:13px;color:var(--text-secondary);margin-top:8px}
+.profile-bio2{font-size:13px;color:var(--text-secondary);margin-top:4px;line-height:1.5}
+.profile-stats2{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--text-secondary)}
+.profile-stats2 b{color:var(--text);font-size:13px}
+.profile-tabs{display:flex;gap:2px;margin-top:16px;overflow-x:auto}
+.ptab{padding:10px 12px;font-size:13px;font-weight:500;color:var(--text-secondary);
+  border-bottom:2px solid transparent;white-space:nowrap}
+.ptab:hover{color:var(--text)}
+.ptab.active{color:var(--text);border-bottom-color:var(--primary)}
+/* «витринная» сетка вкладок Bookmarks: 2 мелких слева + 1 большой справа */
+.featured-grid{display:grid;grid-template-columns:1fr 1.9fr;gap:12px;margin-bottom:12px}
+.post-card--big{grid-column:2;grid-row:1/3;display:flex;flex-direction:column}
+.post-card--big .card-media{aspect-ratio:auto;flex:1;min-height:220px}
+.featured-grid--solo{grid-template-columns:1fr}
+.featured-grid--solo .post-card--big{grid-column:auto;grid-row:auto}
+.featured-grid--solo .post-card--big .card-media{min-height:460px}
+
+/* теги сразу на большой карточке (как на странице поста) */
+.card-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.card-tags .chip{height:30px}
+.card-tags .chip-part{padding:0 12px}
+.card-tags .chip-part .label{font-size:12px;line-height:12px}
+
+/* History: строки треков (YouTube-стиль) */
+.track-row{display:flex;gap:14px;padding:12px 6px;text-decoration:none}
+.track-row:hover .track-title{color:var(--primary)}
+.track-thumb{position:relative;width:300px;flex:none;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--bg-surface)}
+.track-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.track-dur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.85);color:#fff;font-size:12px;font-weight:600;padding:2px 6px;border-radius:4px}
+.track-info{display:flex;flex-direction:column;min-width:0}
+.track-title{font-size:16px;font-weight:600;color:var(--text);line-height:1.35;transition:color .15s}
+.track-meta{font-size:13px;color:var(--text-secondary);margin-top:4px}
+.track-channel{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary);margin-top:8px}
+.track-av{width:20px;height:20px;border-radius:50%;display:block}
+.track-desc{font-size:13px;color:var(--text-secondary);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* история (History) */
+.history-item{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--divider)}
+.history-item:first-child{border-top:0;padding-top:2px}
+.history-link{font-size:12px;display:inline-block;margin-top:4px}
+/* «18+» пост: blur, плашка, гейт да/нет */
+.nsfw-blur{filter:blur(16px) saturate(.75);transform:scale(1.06)}
+.post-media img.nsfw-blur{filter:blur(28px) saturate(.7);transform:scale(1.15)}
+.badge-18{position:absolute;top:6px;left:6px;background:#930100;color:#ffdad4;
+  font-size:11px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:6px}
+.nsfw-gate{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;background:rgba(0,0,0,.6);text-align:center;padding:20px;z-index:3}
+.gate-18{font-size:42px;font-weight:800;color:#ffdad4;background:#930100;
+  padding:8px 22px;border-radius:14px;letter-spacing:1px}
+.gate-text{font-size:13px;color:var(--text-secondary);max-width:360px}
+.gate-hint{font-size:12px;opacity:.85}
+.gate-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.gate-yes{background:var(--primary);color:#520071;font-weight:700;padding:9px 20px;border-radius:999px;font-size:13px}
+.gate-yes:hover{filter:brightness(1.1)}
+.gate-no{border:1px solid var(--divider);color:var(--text-secondary);padding:9px 20px;border-radius:999px;font-size:13px}
+.gate-no:hover{color:var(--text)}
+.search-box{display:flex;align-items:center;gap:10px;height:44px;
+  background:var(--bg-high);border-radius:999px;padding:0 18px;margin-bottom:20px}
+.search-box .icon{font-size:20px;color:var(--text-secondary)}
+.search-box input{flex:1;background:none;border:0;outline:none;color:var(--text);font:14px Roboto,system-ui,sans-serif}
+.search-box input::placeholder{color:var(--text-secondary)}
+.posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.suggested-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.post-card{display:block;background:var(--bg-high);border-radius:var(--radius);
+  overflow:hidden;color:var(--text);transition:background .15s}
+.post-card:hover{background:var(--bg-surface);text-decoration:none}
+.card-media{position:relative;aspect-ratio:4/3;background:var(--bg-highest)}
+.card-media img{width:100%;height:100%;object-fit:cover}
+.card-play{position:absolute;right:6px;bottom:6px;display:flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff;
+  font-size:11px;font-weight:600}
+.card-play .icon{font-size:14px}
+.card-stats{display:flex;align-items:center;gap:12px;padding:8px 10px;
+  font-size:12px;color:var(--text-secondary)}
+.card-stats .icon{font-size:14px;margin-right:4px}
+.card-stats .stat-like{color:var(--text)}
+.card-stats .stat-like .icon{color:var(--liked)}
+.btn-ghost{display:block;margin:16px auto 0;padding:8px 18px;border-radius:999px;
+  border:1px solid var(--divider);color:var(--text-secondary);font-size:13px;font-weight:500}
+.btn-ghost:hover{background:rgba(226,226,226,.06);color:var(--text)}
+
+/* ================= STRANICA POSTA ================= */
+.post-wrap{padding-top:20px}
+.post-media-wrap{position:relative;max-width:1000px;margin:0 auto}
+.post-media{position:relative;background:#000;border-radius:var(--radius);display:flex;
+  align-items:center;justify-content:center;min-height:320px;overflow:hidden}
+.post-media img{max-width:100%;max-height:74vh;object-fit:contain}
+.post-nav-row{display:flex;justify-content:space-between;align-items:center;
+  max-width:1000px;margin:0 auto 12px}
+.post-nav-link{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;
+  color:var(--text);padding:6px 12px;border-radius:8px}
+.post-nav-link .icon{font-size:16px}
+.post-nav-link:hover{background:var(--bg-high)}
+.post-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+.post-tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.post-meta{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:18px;
+  margin-top:14px;font-size:13px;color:var(--text-secondary)}
+.post-meta .icon{font-size:15px;margin-right:5px;vertical-align:-2px}
+.post-source{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;
+  margin-top:8px;font-size:13px;color:var(--text-secondary)}
+.post-source .icon{font-size:15px;vertical-align:-2px}
+.post-source a{word-break:break-all}
+
+/* ================= КОММЕНТАРИИ ================= */
+.comment-input-row{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.comment-input-row .avatar{width:36px;height:36px}
+.comment-input{flex:1;height:44px;border-radius:999px;background:var(--bg-high);
+  display:flex;align-items:center;padding:0 18px;color:var(--text-secondary);
+  font-size:14px;cursor:text}
+.comment-input:hover{background:var(--bg-highest)}
+.comment-form{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;
+  background:var(--bg-surface);border-radius:var(--radius);padding:14px}
+.comment-form input,.comment-form textarea{background:var(--bg-high);border:1px solid var(--divider);
+  border-radius:8px;color:var(--text);padding:9px 12px;font:14px Roboto,system-ui,sans-serif;outline:none;resize:vertical}
+.comment-form input:focus,.comment-form textarea:focus{border-color:var(--primary)}
+.comment-form textarea{min-height:70px}
+.comment-form .row{display:flex;gap:8px;justify-content:flex-end}
+.comment-form .send{background:var(--primary);color:#520071;font-weight:700;
+  padding:8px 18px;border-radius:999px;font-size:13px}
+.comment-form .send:hover{filter:brightness(1.1)}
+.comment{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--divider)}
+.comment:first-of-type{border-top:0}
+.comment .avatar{width:36px;height:36px}
+.cmt-body{flex:1;min-width:0}
+.comment-header{display:flex;align-items:baseline;gap:8px}
+.cmt-name{font-size:13px;font-weight:700;color:var(--text)}
+.cmt-time{font-size:12px;color:var(--text-secondary)}
+.cmt-text{font-size:14px;line-height:20px;margin-top:4px;overflow-wrap:anywhere}
+.cmt-actions{display:flex;align-items:center;gap:4px;margin-top:8px}
+.cmt-actions .chip{height:30px}
+.cmt-actions .chip-part{padding:0 10px}
+.cmt-actions .chip-part .icon{font-size:15px;color:var(--text-secondary)}
+.cmt-actions .chip-part .label{font-size:12px;color:var(--text-secondary)}
+.cmt-actions .chip-part .icon.liked{color:var(--liked)}
+.cmt-actions .divider{width:1.5px;height:20px;background:var(--divider);margin:0 4px}
+
+/* ================= PLAYLISTS ================= */
+.tabs{display:inline-flex;background:var(--bg-high);border-radius:999px;padding:3px;margin-bottom:14px}
+.tab{padding:7px 16px;border-radius:999px;font-size:13px;font-weight:500;color:var(--text-secondary)}
+.tab.active{background:var(--selected);color:var(--primary)}
+.playlist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.playlist-card{background:var(--bg-high);border-radius:var(--radius);padding:14px}
+.playlist-name{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;
+  margin-bottom:10px;color:var(--text)}
+.playlist-name .icon{font-size:20px;color:var(--primary)}
+.playlist-stats{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text-secondary)}
+.playlist-stats .icon{font-size:15px;margin-right:5px;vertical-align:-2px}
+.pagination{display:flex;align-items:center;justify-content:center;gap:14px;
+  margin-top:16px;font-size:13px;color:var(--text-secondary)}
+.pagination button{width:36px;height:36px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;color:var(--text-secondary);font-size:20px}
+.pagination button:hover{background:rgba(226,226,226,.06);color:var(--text)}
+
+/* ================= FOOTER (фиолетовый, как toolbar) ================= */
+.footer{background:var(--toolbar);color:#fff;margin-top:32px}
+.footer-inner{max-width:1280px;margin:0 auto;padding:20px 24px;
+  display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
+.footer .title{font-size:13px;color:#fff;opacity:.92;max-width:760px}
+.footer-links{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+.footer-links a{color:#fff;font-size:13px;opacity:.9}
+.footer-links a:hover{opacity:1}
+
+/* ================= ПРОЧЕЕ ================= */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:99;
+  background:var(--bg-highest);border:1px solid var(--divider);padding:10px 18px;
+  font-size:13px;color:var(--text);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
+.heart-fx{position:fixed;z-index:98;font-size:28px;pointer-events:none;
+  animation:heartUp 1s ease-out forwards}
+@keyframes heartUp{
+  0%{transform:translateY(0) scale(.6);opacity:1}
+  100%{transform:translateY(-140px) scale(1.6);opacity:0}
+}
+.empty{padding:60px 0;text-align:center;color:var(--text-secondary)}
+
+/* ================= МОБИЛКА ================= */
+@media (max-width:900px){
+  .site-name{font-size:18px}
+  .toolbar{gap:0;padding:0 4px}
+  .posts-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .featured-grid{grid-template-columns:1fr}
+  .post-card--big{grid-column:auto;grid-row:auto;min-height:0}
+  .post-card--big .card-media{aspect-ratio:4/3;min-height:0}
+  .featured-grid--solo .post-card--big .card-media{min-height:260px;aspect-ratio:auto}
+  .track-thumb{width:170px}
+  .track-title{font-size:14px}
+  .post-media{min-height:220px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= TOOLBAR ================= -->
+<header class="toolbar">
+  <button class="tb-icon" id="sidenav-btn" aria-label="Меню"></button>
+  <a class="site-name" href="#" id="logo">Transcendencies <span>Vault</span></a>
+  <span class="flex-spacer"></span>
+  <button class="tb-icon" id="notif-btn" aria-label="Уведомления"><span class="tb-badge">3</span></button>
+  <a class="avatar" id="avatar-btn" aria-label="Профиль"></a>
+</header>
+
+<!-- ================= SIDENAV + КОНТЕНТ ================= -->
+<div class="sidenav-backdrop" id="sidenav-backdrop"></div>
+<nav class="sidenav" id="sidenav" aria-label="Навигация">
+  <div class="sidenav-user">
+    <a class="avatar" id="sidenav-avatar"></a>
+    <div>
+      <div class="sidenav-username" id="sidenav-name"></div>
+      <div class="sidenav-sub">Free plan</div>
+    </div>
+  </div>
+  <div class="sidenav-nav" id="sidenav-nav"></div>
+  <div class="sidenav-bottom">
+    <button class="sidenav-item premium" data-stub="1"></button>
+    <button class="sidenav-item" data-stub="1"></button>
+    <button class="sidenav-item" data-stub="1"></button>
+  </div>
+</nav>
+
+<main class="page-content">
+  <!-- ===== HOME: поиск + сетка постов ===== -->
+  <div id="view-home" class="page-container">
+    <div class="home-wrap">
+      <!-- визитка: карточка профиля (по референсу u/страницы) -->
+      <div class="profile-card2" id="profile-card"></div>
+      <div class="search-box" id="search-box">
+        <input id="search-input" type="search" placeholder="Search…" autocomplete="off">
+      </div>
+      <!-- контент вкладок профиля: bookmarks / history / playlists / subs -->
+      <div id="profile-content"></div>
+    </div>
+  </div>
+
+  <!-- ===== POST (собирается JS) ===== -->
+  <div id="view-post" class="page-container" hidden></div>
+
+  <!-- ===== TAG (страница тега, как на эталоне: тег → сетка постов по нему) ===== -->
+  <div id="view-tag" class="page-container" hidden>
+    <div class="home-wrap">
+      <a class="back-link" href="#">&#8592; Все посты</a>
+      <h2 class="section-title" id="tag-title"></h2>
+      <div class="posts-grid" id="tag-grid"></div>
+      <p class="empty" id="tag-empty" hidden>По этому тегу пока пусто.</p>
+    </div>
+  </div>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="title" id="footer-title"></div>
+    <div class="footer-links" id="footer-links"></div>
+  </div>
+</footer>
+
+<script>
+/* ================================================================
+   БЛОК 1 · ДАННЫЕ БОРДЫ — ЕДИНСТВЕННОЕ МЕСТО ДЛЯ ПРАВКИ
+   ================================================================ */
+
+const SITE = {
+  name: "Transcendencies <span>Vault</span>", // логотип в toolbar (можно с HTML)
+  title: "Transcendencies · Transcendencies Vault", // вкладка
+  footerTitle: "Transcendencies Vault — карточка для Discord. Раздел 18+ — предупреждение, за ним ничего страшного.",
+};
+
+/* --- ЛИЦО ВИЗИТКИ: твой профиль (то, что видит гость с линка из Discord) ---
+   user   — ник (Discord/GitHub/как хочешь)
+   avatar — ссылка на твой аватар; null = генерируемая заглушка с инициалом
+   title  — шуточная должность под ником
+   bio    — описание профиля (2-3 строки)
+   since  — "в Vault с …" */
+const PROFILE = {
+  user: "Transcendencies",
+  handle: "@cheap.slut",      // подпись под ником
+  /* АВТАР = АВТО-СИНХРОН с Discord: вставь свой Discord ID (число) вместо
+     PASTE_YOUR_DISCORD_ID — и ава сама будет меняться под твою в Discord.
+     Как узнать ID: Discord → Настройки → Дополнительно → «Режим разработчика» ВКЛ
+     → ПКМ по своему нику в любом чате → «Копировать ID».
+     Если ID не вставлен/сервис лёг — по onerror покажется заглушка с инициалом. */
+  avatar: "https://unavatar.io/discord/PASTE_YOUR_DISCORD_ID?fallback=false",
+  bio: "Несерьёзная карточка для Discord. Ниже — пост и плейлист.",
+  since: "2014",
+};
+
+const FOOTER_LINKS = ["Contact us", "Terms of Service", "DMCA", "Discord"];
+
+const NAV = [
+  { icon: "home",           label: "Home",        action: "home"   },
+  { icon: "star_border",    label: "Best posts",  action: "home"   },
+  { icon: "whatshot",       label: "Hot",         action: "hot"    },
+  { icon: "playlist_play",  label: "Playlists",   action: "stub"   },
+  { icon: "trending_up",    label: "Trends",      action: "stub"   },
+  { icon: "forum",          label: "Comments",    action: "stub"   },
+  { icon: "campaign",       label: "Announcements", action: "stub", badge: 1 },
+];
+/* action: home = сетка постов, hot = сетка по рейтингу, stub = тост-заглушка */
+
+/* Кнопки внизу sidenav */
+const SIDENAV_BOTTOM = [
+  { icon: "verified",   label: "Upgrade Account", premium: true },
+  { icon: "get_app",    label: "Install App" },
+  { icon: "exit_to_app",label: "Log out" },
+];
+
+/* Категории тегов → цвет чипа:
+   copyright · character · artist · general · meta · system */
+const TAG_CATEGORY_LABELS = {
+  copyright: "IP", character: "Персонаж", artist: "Автор",
+  general: "Общий", meta: "Мета", system: "Система",
+};
+
+/* --- Посты ---
+   Поля:
+   id        — уникальный номер
+   title     — название (видео-посты помечай video)
+   img       — ссылка на картинку; null = SVG-заглушка
+   video     — null или длительность "1:30" (покажет бейдж ▶)
+   nsfw      — true = пост «18+»: blur + плашка 18+, гейт «да/нет»,
+               а за blur'ом на самом деле нормальная картинка (рофл)
+   rating    — число ♥
+   views     — число просмотров (форматируется в "3.9 K")
+   published — "1 year ago"
+   date      — дата публикации полностью
+   source    — ссылка-источник
+   tags      — короткие фразы, две формы:
+               ["фраза 1", "фраза 2"]                — просто строки (синий "general")
+               [{ t: "вафля кот", c: "character" }]  — с категорией-цветом
+               первые 10 видны, дальше «Show more (+N)»; клик по тегу = страница тега
+   comments  — [{ user, text, when, likes }] */
+const POSTS = [
+  {
+    /* Единственный пост: «18+» — уже открыт: без blur, без плашки, без гейта.
+       Картинку (пока SVG-заглушка) вставь в img. */
+    id: 1010,
+    title: "18+",
+    img: null,
+    video: null,
+    nsfw: false,
+    rating: 18,
+    views: 1080,
+    published: "today",
+    date: "Nov 9, 2026, 4:33:00 PM",
+    source: "t.me/transcendencies/18",
+    tags: ["femdom", "sensitive", "your king", "18+", "domestic", "soft", "not really"],
+    comments: [],
+  },
+];
+
+/* --- Плейлисты (пусто — по запросу) --- */
+const PLAYLISTS = [];
+
+/* --- History: рандомные треки Sematari (обложки клипов с YouTube, i.ytimg.com).
+   views/when — примерно, поправь как хочешь. --- */
+const TRACKS = [
+  { title: "SEMATARY - WENDIGO [OFFICIAL VIDEO]",
+    video: "3:34", views: "3.6M", when: "2 years ago",
+    desc: "PRODUCED WRITTEN & RECORDED BY SEMATARI GRAVE MAN. Shot By Ghost Mountain.",
+    img: "https://i.ytimg.com/vi/cqAJ3ncDgbI/hqdefault.jpg",
+    src: "https://www.youtube.com/watch?v=cqAJ3ncDgbI" },
+  { title: "SEMATARY - CHAINSAW PARTY [OFFICIAL VIDEO]",
+    video: "2:37", views: "1.4M", when: "2 years ago",
+    desc: "HAUNTED MOUND. Sematary — official video.",
+    img: "https://i.ytimg.com/vi/GqhZFtFhS6U/hqdefault.jpg",
+    src: "https://www.youtube.com/watch?v=GqhZFtFhS6U" },
+  { title: "SEMATARY - MORDOR [OFFICIAL VIDEO]",
+    video: "2:47", views: "2.1M", when: "2 years ago",
+    desc: "HAUNTED MOUND. Sematary — official video.",
+    img: "https://i.ytimg.com/vi/coTw6oQMKhQ/hqdefault.jpg",
+    src: "https://www.youtube.com/watch?v=coTw6oQMKhQ" },
+  { title: "SEMATARY - SMOKE MACHINE PROD. ANVIL",
+    video: "3:00", views: "980K", when: "1 year ago",
+    desc: "BLOODY ANGEL. PROD. ANVIL. Sematary.",
+    img: "https://i.ytimg.com/vi/vzG6wVihrOY/hqdefault.jpg",
+    src: "https://www.youtube.com/watch?v=vzG6wVihrOY" },
+  { title: "SEMATARY - TRUEY JEANS [OFFICIAL VIDEO]",
+    video: "3:02", views: "760K", when: "1 year ago",
+    desc: "RAINBOW BRIDGE. Sematary — official video.",
+    img: "https://i.ytimg.com/vi/doo0reV4Jpg/hqdefault.jpg",
+    src: "https://www.youtube.com/watch?v=doo0reV4Jpg" },
+  { title: "SEMATARY - I HAIL THE NIGHT [OFFICIAL VIDEO]",
+    video: "2:56", views: "1.1M", when: "1 year ago",
+    desc: "HAUNTED MOUND. Sematary — official video.",
+    img: "https://i.ytimg.com/vi/BOQ-7-5UsUs/hqdefault.jpg",
+    src: "https://www.youtube.com/watch?v=BOQ-7-5UsUs" },
+];
+
+/* --- Теги: разрешаем оба формата.
+   "короткая фраза" → общий тег (general); объект { t, c } → со своей категорией-цветом --- */
+POSTS.forEach(p => { p.tags = p.tags.map(t => typeof t === "string" ? { t, c: "general" } : t); });
+
+function tagCount(name){ return POSTS.filter(p => p.tags.some(t => t.t === name)).length; }
+
+/* ================================================================
+   БЛОК 2 · ЛОГИКА. Править не обязательно.
+   ================================================================ */
+
+const $ = (s) => document.querySelector(s);
+
+/* --- Material Icons (SVG-пути) --- */
+const ICONS = {
+  menu:"M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z",
+  home:"M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
+  star_border:"M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z",
+  whatshot:"M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z",
+  playlist_play:"M4 10h12v2H4v-2zm0-4h12v2H4V6zm0 8h8v2H4v-2zm10 0v6l5-3-5-3z",
+  trending_up:"M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z",
+  forum:"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z",
+  campaign:"M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.54-.8-1.08-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z",
+  verified:"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69l-3.61.81.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z",
+  get_app:"M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z",
+  exit_to_app:"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z",
+  arrow_back:"M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
+  arrow_forward:"M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
+  favorite:"M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+  favorite_border:"M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.7 14.78l-.8.72-.8-.72C5.01 13.61 2 10.88 2 8.5 2 6.02 4.02 4 6.5 4c1.54 0 3.04.79 3.87 2.07l.63 1 .63-1C12.46 4.79 13.96 4 15.5 4c2.48 0 4.5 2.02 4.5 4.5 0 2.38-3.01 5.11-8.99 9.28z",
+  bookmark_border:"M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z",
+  playlist_add:"M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z",
+  more_horiz:"M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z",
+  visibility:"M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z",
+  play_arrow:"M8 5v14l11-7z",
+  comment:"M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z",
+  link:"M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z",
+  info_outline:"M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z",
+  people:"M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
+  refresh:"M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z",
+  keyboard_arrow_left:"M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z",
+  keyboard_arrow_right:"M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z",
+  search:"M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z",
+  settings:"M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
+  thumb_up:"M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z",
+  thumb_down:"M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z",
+  reply:"M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z",
+  notifications:"M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z",
+};
+function icon(n){ return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="' + (ICONS[n] || "") + '"/></svg>'; }
+
+const esc = (s) => String(s).replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function fmtK(n){
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + " M";
+  if (n >= 1000) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + " K";
+  return String(n);
+}
+
+/* --- Аватар-заглушка (SVG data-URI, инициал на тёмном фоне) --- */
+function avatarUri(ch){
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">' +
+    '<rect width="64" height="64" fill="#333535"/>' +
+    '<text x="32" y="42" font-size="30" text-anchor="middle" fill="#ebb2ff" font-family="sans-serif">' + esc(ch || "?") + '</text></svg>';
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+/* --- Картинка-заглушка (SVG data-URI), пока img: null --- */
+const EMOJIS = ["🐈","","","","💻","","",""];
+function placeholderFor(p){
+  const hue = (p.id * 47) % 360;
+  const emoji = EMOJIS[p.id % EMOJIS.length];
+  const short = p.title.length > 34 ? p.title.slice(0, 33) + "…" : p.title;
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">' +
+    '<rect width="800" height="600" fill="hsl(' + hue + ',28%,16%)"/>' +
+    '<rect x="16" y="16" width="768" height="568" rx="18" fill="none" ' +
+    'stroke="hsl(' + hue + ',45%,34%)" stroke-width="3" stroke-dasharray="12 10"/>' +
+    '<text x="40" y="60" font-size="22" fill="#98a0ad" font-family="sans-serif">id ' + p.id + '</text>' +
+    '<text x="400" y="330" font-size="150" text-anchor="middle">' + emoji + '</text>' +
+    '<text x="400" y="430" font-size="26" text-anchor="middle" fill="#e2e2e2" font-family="sans-serif">' + esc(short) + '</text>' +
+    '<text x="400" y="468" font-size="18" text-anchor="middle" fill="#98a0ad" font-family="sans-serif">заглушка: вставь свою ссылку в поле img</text>' +
+    '<text x="760" y="566" font-size="18" text-anchor="end" fill="#98a0ad" font-family="sans-serif">' + esc(fmtK(p.views)) + ' views</text>' +
+    '</svg>';
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+/* ---------- State ---------- */
+const state = { query: "", hot: false, currentPostId: null, expanded: false,
+  playlistTab: "updated", sidenavOpen: false, profileTab: "bookmarks",
+  revealed: new Set() };
+
+/* ---------- Тост ---------- */
+let toastTimer = null;
+function toast(msg){
+  let el = document.querySelector(".toast");
+  if (!el){ el = document.createElement("div"); el.className = "toast"; document.body.appendChild(el); }
+  el.textContent = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 2600);
+}
+
+/* ---------- Toolbar / Sidenav / Footer ---------- */
+/* Аватар: динамичный (PROFILE.avatar, напр. URL из Discord CDN) + fallback-заглушка,
+   если ссылка «умрёт» (сменил аву на Discord и т.п.) */
+function avatarImg(){
+  const fb = avatarUri(PROFILE.user[0].toUpperCase());
+  return '<img src="' + (PROFILE.avatar || fb) + '" onerror="this.onerror=null;this.src=\'' + fb + '\'" alt="">';
+}
+
+function renderChrome(){
+  $("#logo").innerHTML = SITE.name;
+  document.title = SITE.title;
+  $("#sidenav-btn").innerHTML = icon("menu");
+  $("#notif-btn").insertAdjacentHTML("afterbegin", icon("notifications"));
+  $("#avatar-btn").innerHTML = avatarImg();
+  $("#sidenav-avatar").innerHTML = avatarImg();
+  $("#sidenav-name").textContent = PROFILE.user;
+
+  $("#sidenav-nav").innerHTML = NAV.map(n =>
+    '<button class="sidenav-item" data-action="' + esc(n.action) + '" data-label="' + esc(n.label) + '">' +
+    icon(n.icon) + '<span>' + esc(n.label) + '</span>' +
+    (n.badge ? '<span class="sidenav-badge">' + n.badge + '</span>' : '') + '</button>').join("");
+
+  const bottom = document.querySelectorAll(".sidenav-bottom .sidenav-item");
+  bottom.forEach((b, i) => {
+    const item = SIDENAV_BOTTOM[i];
+    b.innerHTML = icon(item.icon) + '<span>' + esc(item.label) + '</span>';
+    if (item.premium) b.classList.add("premium");
+  });
+
+  $("#footer-title").textContent = SITE.footerTitle;
+  $("#footer-links").innerHTML = FOOTER_LINKS.map(l =>
+    '<a href="#" data-stub="' + esc(l) + '">' + esc(l) + "</a>").join("");
+
+  $("#search-box").insertAdjacentHTML("afterbegin", icon("search"));
+  renderProfile();
+}
+
+/* ---------- Визитка: карточка профиля (1:1 по референсу u/страницы) ---------- */
+function renderProfile(){
+  const totalC = POSTS.reduce((a, p) => a + p.comments.length, 0);
+  $("#profile-card").innerHTML =
+    '<div class="pc-top">' +
+      '<a class="avatar avatar-xl">' + avatarImg() + "</a>" +
+    "</div>" +
+    '<div class="profile-name2">' + esc(PROFILE.user) + "</div>" +
+    '<div class="profile-handle">' + esc(PROFILE.handle) + "</div>" +
+    '<div class="profile-role">в Vault с ' + esc(PROFILE.since) + "</div>" +
+    '<div class="profile-bio2">' + esc(PROFILE.bio) + "</div>" +
+    '<div class="profile-stats2">' +
+      "<span><b>" + POSTS.length + "</b> post</span>" +
+      "<span><b>" + totalC + "</b> comments</span>" +
+    "</div>" +
+    '<div class="profile-tabs" id="profile-tabs">' +
+      '<button class="ptab" type="button" data-ptab="bookmarks">Bookmarks (' + POSTS.length + ")</button>" +
+      '<button class="ptab" type="button" data-ptab="history">History (' + TRACKS.length + ")</button>" +
+      '<button class="ptab" type="button" data-ptab="playlists">Playlists (' + PLAYLISTS.length + ")</button>" +
+      '<button class="ptab" type="button" data-ptab="subs">Subscriptions</button>' +
+    "</div>";
+  document.querySelectorAll("#profile-tabs .ptab").forEach(t => {
+    t.classList.toggle("active", t.dataset.ptab === state.profileTab);
+    t.onclick = () => { state.profileTab = t.dataset.ptab; renderProfile(); };
+  });
+  renderProfileContent();
+}
+
+/* ---------- Контент вкладок профиля ---------- */
+function playlistCardHtml(pl){
+  return '<div class="playlist-card">' +
+    '<div class="playlist-name">' + icon("playlist_play") + esc(pl.name) + "</div>" +
+    '<div class="playlist-stats">' +
+      "<span>" + icon("playlist_play") + pl.items + "</span>" +
+      (pl.likes ? "<span>" + icon("favorite") + pl.likes + "</span>" : "") +
+      (pl.comments ? "<span>" + icon("forum") + pl.comments + "</span>" : "") +
+      "<span>" + icon("people") + pl.members + "</span>" +
+    "</div></div>";
+}
+
+function bookmarksContent(){
+  const list = visiblePosts();
+  if (!list.length) return '<p class="empty">Ничего не нашлось. Попробуй другой запрос.</p>';
+  if (list.length === 1){
+    return '<div class="featured-grid featured-grid--solo">' + cardHtml(list[0], true) + "</div>";
+  }
+  const big = list.find(p => p.nsfw) || list[0];
+  const smalls = list.filter(p => p !== big).slice(0, 2);
+  const rest = list.filter(p => p !== big && smalls.indexOf(p) === -1);
+  let html = "";
+  if (smalls.length === 2){
+    /* витрина: 2 мелких слева + 1 большой справа (большой = «18+» пост) */
+    html += '<div class="featured-grid">' + cardHtml(smalls[0]) + cardHtml(smalls[1]) + cardHtml(big, true) + "</div>";
+  }
+  if (rest.length) html += '<div class="posts-grid">' + rest.map(p => cardHtml(p)).join("") + "</div>";
+  html += '<button class="btn-ghost" type="button" data-toast="Show more — в каркасе уже все посты">Show more</button>';
+  return html;
+}
+
+/* ---------- История: строка трека (YouTube-стиль: обложка слева, инфо справа) ---------- */
+function trackRowHtml(t){
+  return '<a class="track-row" href="' + esc(t.src) + '" target="_blank" rel="noopener">' +
+    '<div class="track-thumb">' +
+      '<img src="' + esc(t.img) + '" alt="' + esc(t.title) + '" loading="lazy">' +
+      '<span class="track-dur">' + esc(t.video) + "</span>" +
+    "</div>" +
+    '<div class="track-info">' +
+      '<div class="track-title">' + esc(t.title) + "</div>" +
+      '<div class="track-meta">' + esc(t.views) + " · " + esc(t.when) + "</div>" +
+      '<div class="track-channel"><img class="track-av" src="' + avatarUri("S") + '" alt="">Sematary</div>' +
+      '<div class="track-desc">' + esc(t.desc) + "</div>" +
+    "</div></a>";
+}
+
+function renderProfileContent(){
+  const box = $("#profile-content");
+  if (state.profileTab === "bookmarks"){
+    box.innerHTML = bookmarksContent();
+  } else if (state.profileTab === "history"){
+    box.innerHTML = TRACKS.length
+      ? TRACKS.map(trackRowHtml).join("")
+      : '<p class="empty">Пока пусто.</p>';
+  } else if (state.profileTab === "playlists"){
+    box.innerHTML = PLAYLISTS.length
+      ? '<div class="playlist-grid">' + PLAYLISTS.map(playlistCardHtml).join("") + "</div>"
+      : '<p class="empty">Пока пусто.</p>';
+  } else {
+    box.innerHTML = '<p class="empty">Подписок пока нет. Скука в чистом виде.</p>';
+  }
+}
+
+function setSidenav(open){
+  state.sidenavOpen = open;
+  $("#sidenav").classList.toggle("open", open);
+  $("#sidenav-backdrop").classList.toggle("open", open);
+}
+
+/* ---------- HOME ---------- */
+function visiblePosts(){
+  let list = POSTS.slice();
+  if (state.hot) list.sort((a, b) => b.rating - a.rating);
+  if (state.query){
+    const q = state.query.toLowerCase();
+    list = list.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      p.tags.some(t => t.t.toLowerCase().includes(q)));
+  }
+  return list;
+}
+
+function cardHtml(p, big){
+  const nsfw = p.nsfw && !state.revealed.has(p.id);
+  return '<a class="post-card' + (big ? " post-card--big" : "") + '" href="#post/' + p.id + '" title="' + esc(p.title) + '">' +
+    '<div class="card-media">' +
+      '<img class="' + (nsfw ? "nsfw-blur" : "") + '" src="' + (p.img || placeholderFor(p)) + '" alt="' + esc(p.title) + '" loading="lazy">' +
+      (nsfw ? '<span class="badge-18">18+</span>' : "") +
+      (p.video ? '<span class="card-play">' + icon("play_arrow") + esc(p.video) + "</span>" : "") +
+    "</div>" +
+    '<div class="card-stats">' +
+      "<span>" + icon("visibility") + fmtK(p.views) + "</span>" +
+      '<span class="stat-like">' + icon("favorite") + fmtK(p.rating) + "</span>" +
+      "<span>" + icon("comment") + p.comments.length + "</span>" +
+    "</div>" +
+    (big ? '<div class="card-tags">' + p.tags.map(t =>
+      '<span class="chip chip--tag-' + esc(t.c) + '"><span class="chip-part"><span class="label">' + esc(t.t) + "</span></span></span>").join("") + "</div>" : "") +
+    "</a>";
+}
+
+/* (лендинг теперь = страница профиля; сетка постов живёт во вкладке Bookmarks) */
+
+/* ---------- STRANICA POSTA ---------- */
+function tagChips(p, expanded){
+  const show = expanded ? p.tags : p.tags.slice(0, 10);
+  let html = show.map(t => {
+    const n = tagCount(t.t);
+    return '<button class="chip chip--tag-' + esc(t.c) + '" data-tag="' + esc(t.t) + '" title="' +
+      esc(t.t) + ' · ' + n + ' ' + plural(n, "пост", "поста", "постов") + '">' +
+      '<span class="chip-part"><span class="label">' + esc(t.t) + "</span></span></button>";
+  }).join("");
+  if (!expanded && p.tags.length > 10)
+    html += '<button class="chip chip--tonal" id="tags-more"><span class="chip-part"><span class="label">Show more (+' +
+      (p.tags.length - 10) + ")</span></span></button>";
+  return html;
+}
+
+function renderPost(p){
+  const others = POSTS.filter(x => x.id !== p.id).slice(0, 8);
+  const nsfwMedia = p.nsfw && !state.revealed.has(p.id);
+
+  $("#view-post").innerHTML =
+    '<div class="post-wrap">' +
+    /* prev/next в верхних углах (как на эталоне) */
+    '<div class="post-nav-row">' +
+      '<button class="post-nav-link" id="post-prev" type="button">' + icon("arrow_back") + "<span>Previous</span></button>" +
+      '<button class="post-nav-link" id="post-next" type="button"><span>Next</span>' + icon("arrow_forward") + "</button>" +
+    "</div>" +
+    /* медиа + гейт «18+ да/нет» (за blur'ом — нормальная картинка, рофл) */
+    '<div class="post-media-wrap">' +
+      '<div class="post-media">' +
+        '<img id="post-main-img" class="' + (nsfwMedia ? "nsfw-blur" : "") + '" src="' + (p.img || placeholderFor(p)) + '" alt="' + esc(p.title) + '">' +
+        (nsfwMedia ? '<div class="nsfw-gate" id="nsfw-gate">' +
+          '<div class="gate-18">18+</div>' +
+          '<div class="gate-text">Дальше может быть контент 18+. Ты уверен(а)?<br>' +
+          '<span class="gate-hint">(на самом деле нет)</span></div>' +
+          '<div class="gate-row">' +
+            '<button class="gate-yes" id="gate-yes" type="button">Да, мне есть 18</button>' +
+            '<button class="gate-no" id="gate-no" type="button">Нет, уйду</button>' +
+          "</div></div>" : "") +
+      "</div>" +
+    "</div>" +
+    /* действия */
+    '<div class="post-actions">' +
+      '<button class="chip chip--tonal" id="fav-btn" type="button"><span class="chip-part"><span class="icon">' +
+        icon("favorite_border") + '</span><span class="label">' + fmtK(p.rating) + "</span></span></button>" +
+      '<button class="chip chip--tonal" id="bm-btn" type="button"><span class="chip-part"><span class="icon">' +
+        icon("bookmark_border") + "</span></span></button>" +
+      '<button class="chip chip--tonal" id="pl-btn" type="button"><span class="chip-part"><span class="icon">' +
+        icon("playlist_add") + '</span><span class="label">Add to playlist</span></span></button>' +
+      '<button class="chip chip--tonal" id="more-btn" type="button"><span class="chip-part"><span class="icon">' +
+        icon("more_horiz") + "</span></span></button>" +
+    "</div>" +
+    /* теги */
+    '<div class="post-tags" id="post-tags">' + tagChips(p, state.expanded) + "</div>" +
+    /* мета */
+    '<div class="post-meta">' +
+      "<span>published " + esc(p.published) + "</span>" +
+      "<span>" + icon("visibility") + fmtK(p.views) + " views</span>" +
+    "</div>" +
+    '<div class="post-source"><span>' + esc(p.date) + "</span> " + icon("link") +
+      '<a href="#" data-toast="Источнику — псевдо-ссылка каркаса">' + esc(p.source) + "</a></div>" +
+    /* suggested (только если есть что предлагать) */
+    (others.length ? '<section class="section"><h2 class="section-title">Suggested posts</h2>' +
+      '<div class="suggested-grid">' + others.map(cardHtml).join("") + "</div>" +
+      '<button class="btn-ghost" type="button" data-toast="Show more — в каркасе уже все посты">Show more</button>' +
+      "</section>" : "") +
+    /* комментарии */
+    '<section class="section"><h2 class="section-title">Comments <span class="count">(' + p.comments.length + ")</span></h2>" +
+      '<div class="comment-input-row"><a class="avatar">' + avatarImg() + "</a>" +
+        '<div class="comment-input" id="cmt-open">Add a public comment</div>' +
+        '<span style="color:var(--text-secondary)">' + icon("info_outline") + "</span></div>" +
+      '<form class="comment-form" id="comment-form" hidden>' +
+        '<input id="cmt-user" type="text" maxlength="24" placeholder="Ник">' +
+        '<textarea id="cmt-text" maxlength="500" placeholder="Комментарий…"></textarea>' +
+        '<div class="row"><button type="button" class="btn-ghost" id="cmt-cancel" style="margin:0">Отмена</button>' +
+        '<button type="submit" class="send">Отправить</button></div>' +
+      "</form>" +
+      '<div id="cmt-list">' +
+        p.comments.map(c =>
+          '<div class="comment"><a class="avatar"><img src="' + avatarUri(c.user[0].toUpperCase()) + '" alt=""></a>' +
+          '<div class="cmt-body"><div class="comment-header"><span class="cmt-name">' + esc(c.user) +
+          '</span><span class="cmt-time">' + esc(c.when || "") + "</span></div>" +
+          '<div class="cmt-text">' + esc(c.text) + "</div>" +
+          '<div class="cmt-actions">' +
+            '<button class="chip" type="button" data-toast="Reply — псевдо-действие каркаса"><span class="chip-part">' + icon("reply") + "</span></button>" +
+            '<span class="divider"></span>' +
+            '<button class="chip" type="button" data-toast="Лайк — псевдо-действие каркаса"><span class="chip-part"><span class="icon liked">' +
+              icon("thumb_up") + '</span><span class="label">' + c.likes + "</span></span></button>" +
+            '<button class="chip" type="button" data-toast="Дислайк — псевдо-действие каркаса"><span class="chip-part">' + icon("thumb_down") + "</span></button>" +
+          "</div></div></div>").join("") +
+      "</div>" +
+    "</section>" +
+    /* плейлисты */
+    '<section class="section"><h2 class="section-title">Playlists</h2>' +
+      '<div class="tabs" id="pl-tabs">' +
+        '<button class="tab" data-tab="updated">Last updated</button>' +
+        '<button class="tab" data-tab="rated">Top rated</button>' +
+        '<button class="tab" data-tab="followed">Most followed</button>' +
+      "</div>" +
+      '<div class="playlist-grid" id="playlist-grid"></div>' +
+      '<div class="pagination">' +
+        '<button type="button" data-toast="Предыдущая страница — псевдо-действие каркаса">' + icon("keyboard_arrow_left") + "</button>" +
+        '<span id="pl-count"></span>' +
+        '<button type="button" data-toast="Следующая страница — псевдо-действие каркаса">' + icon("keyboard_arrow_right") + "</button>" +
+      "</div>" +
+    "</section>" +
+    "</div>";
+
+  /* обработчики страницы поста */
+  const im = $("#post-main-img");
+  im.onerror = () => { im.onerror = null; im.src = placeholderFor(p); };
+
+  $("#post-prev").onclick = () => navPost(-1);
+  $("#post-next").onclick = () => navPost(1);
+  $("#fav-btn").onclick = (e) => {
+    p.rating++;
+    const lbl = e.currentTarget.querySelector(".label");
+    lbl.textContent = fmtK(p.rating);
+    const ic = e.currentTarget.querySelector(".icon");
+    ic.innerHTML = icon("favorite");
+    e.currentTarget.classList.add("chip--liked");
+    heartFx(e.currentTarget.getBoundingClientRect());
+  };
+  const gy = $("#gate-yes");
+  if (gy){
+    gy.onclick = () => { state.revealed.add(p.id); renderPost(p); toast("А тут вообще-то ничего не было 😅"); };
+    $("#gate-no").onclick = () => toast("Мудро. Пусть остаётся замыленным");
+  }
+  $("#bm-btn").onclick = () => toast("Добавлено в закладки (локально)");
+  $("#pl-btn").onclick = () => toast("Add to playlist — псевдо-ссылка, сделаем позже");
+  $("#more-btn").onclick = () => toast("Ещё — псевдо-ссылка");
+
+  const openForm = () => { $("#comment-form").hidden = false; $("#cmt-text").focus(); };
+  $("#cmt-open").onclick = openForm;
+  $("#cmt-cancel").onclick = () => { $("#comment-form").hidden = true; };
+  $("#comment-form").onsubmit = (e) => {
+    e.preventDefault();
+    const text = $("#cmt-text").value.trim();
+    if (!text) return;
+    p.comments.push({
+      user: $("#cmt-user").value.trim() || PROFILE.user,
+      text, when: "только что",
+      likes: 0,
+    });
+    renderPost(p);
+    toast("Комментарий добавлен (локально, не сохраняется)");
+  };
+
+  $("#pl-tabs").addEventListener("click", (e) => {
+    const t = e.target.closest(".tab");
+    if (!t) return;
+    state.playlistTab = t.dataset.tab;
+    renderPlaylists();
+  });
+  renderPlaylists();
+}
+
+function renderPlaylists(){
+  let list = PLAYLISTS.slice();
+  if (state.playlistTab === "rated")    list.sort((a, b) => b.likes - a.likes);
+  if (state.playlistTab === "followed") list.sort((a, b) => b.members - a.members);
+  const cards = list.map(playlistCardHtml).join("");
+  /* секция Playlists на странице поста */
+  [ ["#playlist-grid", "#pl-tabs"] ].forEach(([gSel, tSel]) => {
+    const g = $(gSel);
+    if (!g) return;
+    g.innerHTML = cards;
+    document.querySelectorAll(tSel + " .tab").forEach(t =>
+      t.classList.toggle("active", t.dataset.tab === state.playlistTab));
+  });
+  const cnt = $("#pl-count");
+  if (cnt) cnt.textContent = "Showing 1 - " + list.length + " of " + list.length;
+}
+
+function navPost(dir){
+  const idx = POSTS.findIndex(x => x.id === state.currentPostId);
+  const next = POSTS[(idx + dir + POSTS.length) % POSTS.length];
+  location.hash = "#post/" + next.id;
+}
+
+function heartFx(rect){
+  const h = document.createElement("span");
+  h.className = "heart-fx";
+  h.textContent = "💜";
+  h.style.left = (rect.left + rect.width / 2 - 14) + "px";
+  h.style.top = (rect.top - 10) + "px";
+  document.body.appendChild(h);
+  setTimeout(() => h.remove(), 1000);
+}
+
+/* ---------- Роутинг ---------- */
+/* ---------- Страница тега (как на эталоне) ---------- */
+function renderTag(name){
+  const n = tagCount(name);
+  const found = POSTS.flatMap(p => p.tags).find(t => t.t === name);
+  const cat = found ? found.c : "general";
+  $("#tag-title").innerHTML = "Tag: " +
+    '<span class="chip chip--small chip--tag-' + esc(cat) + '"><span class="chip-part"><span class="label">' +
+    esc(name) + '</span></span></span>' +
+    ' <span class="count">(' + n + ' ' + plural(n, "пост", "поста", "постов") + ")</span>";
+  const list = POSTS.filter(p => p.tags.some(t => t.t === name));
+  $("#tag-grid").innerHTML = list.map(cardHtml).join("");
+  $("#tag-empty").hidden = list.length > 0;
+}
+
+function route(){
+  const m = location.hash.match(/^#post\/(\d+)/);
+  if (m){
+    const p = POSTS.find(x => x.id === Number(m[1]));
+    if (p){
+      state.currentPostId = p.id;
+      state.expanded = false;
+      $("#view-home").hidden = true;
+      $("#view-post").hidden = false;
+      $("#view-tag").hidden = true;
+      renderPost(p);
+      window.scrollTo(0, 0);
+      return;
+    }
+  }
+  const mt = decodeURIComponent(location.hash).match(/^#tag\/(.+)$/);
+  if (mt){
+    state.currentPostId = null;
+    $("#view-post").hidden = true;
+    $("#view-home").hidden = true;
+    $("#view-tag").hidden = false;
+    renderTag(mt[1]);
+    window.scrollTo(0, 0);
+    return;
+  }
+  state.currentPostId = null;
+  $("#view-post").hidden = true;
+  $("#view-tag").hidden = true;
+  $("#view-home").hidden = false;
+  renderProfile();
+}
+window.addEventListener("hashchange", route);
+
+/* ---------- События общего каркаса ---------- */
+/* Теги на странице поста: делегирование на #view-post (выживает после re-render) */
+$("#view-post").addEventListener("click", (e) => {
+  const p = POSTS.find(x => x.id === state.currentPostId);
+  if (!p) return;
+  if (e.target.closest("#tags-more")){
+    state.expanded = true;
+    $("#post-tags").innerHTML = tagChips(p, true);
+    return;
+  }
+  const chip = e.target.closest("#post-tags [data-tag]");
+  if (chip){
+    location.hash = "#tag/" + encodeURIComponent(chip.dataset.tag);
+  }
+});
+
+$("#sidenav-btn").addEventListener("click", () => setSidenav(!state.sidenavOpen));
+$("#sidenav-backdrop").addEventListener("click", () => setSidenav(false));
+$("#sidenav-nav").addEventListener("click", (e) => {
+  const b = e.target.closest(".sidenav-item");
+  if (!b) return;
+  const act = b.dataset.action;
+  document.querySelectorAll("#sidenav-nav .sidenav-item").forEach(x => x.classList.remove("active"));
+  if (act === "home"){
+    state.hot = false; b.classList.add("active");
+    if (location.hash) location.hash = ""; else route();
+  } else if (act === "hot"){
+    state.hot = true; b.classList.add("active");
+    if (location.hash) location.hash = ""; else route();
+  } else {
+    toast("Раздел «" + b.dataset.label + "» — псевдо-ссылка, сделаем позже");
+  }
+  setSidenav(false);
+});
+document.querySelectorAll(".sidenav-bottom .sidenav-item").forEach(b =>
+  b.addEventListener("click", () => toast("«" + b.textContent.trim() + "» — псевдо-ссылка")));
+$("#logo").addEventListener("click", (e) => {
+  e.preventDefault();
+  state.hot = false; state.query = "";
+  $("#search-input").value = "";
+  if (location.hash) location.hash = ""; else route();
+});
+$("#notif-btn").addEventListener("click", () => toast("Уведомления: 3 непрочитанных мема (демо)"));
+$("#avatar-btn").addEventListener("click", () => toast("Профиль — псевдо-ссылка"));
+$("#search-input").addEventListener("input", (e) => {
+  state.query = e.target.value.trim();
+  if (!$("#view-post").hidden) location.hash = "";
+  else { state.profileTab = "bookmarks"; renderProfile(); }
+});
+/* общий обработчик псевдо-ссылок (data-toast) */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-toast]");
+  if (!b) return;
+  e.preventDefault();
+  toast(b.dataset.toast);
+});
+$("#footer-links").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-stub]");
+  if (!a) return;
+  e.preventDefault();
+  toast(a.dataset.stub + " — псевдо-ссылка");
+});
+
+/* ---------- Старт ---------- */
+renderChrome();
+route();
+</script>
+</body>
+</html>
