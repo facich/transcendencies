@@ -491,7 +491,7 @@ const TAG_CATEGORY_LABELS = {
    nsfw      — true = пост «18+»: blur + плашка 18+, гейт «да/нет»,
                а за blur'ом на самом деле нормальная картинка (рофл)
    rating    — число ♥
-   views     — число просмотров (форматируется в "3.9 K")
+   views     — число (покажется "3.9 K") ИЛИ текст в кавычках (как есть, напр. "многа")
    published — "1 year ago"
    date      — дата публикации полностью
    source    — ссылка-источник
@@ -510,7 +510,7 @@ const POSTS = [
     video: null,
     nsfw: false,
     rating: 1111,
-    views: 1000000,   // «многа»
+    views: "многа",   // текст — показывается как есть (или число, напр. 1080)
     published: "today",
     date: "Nov 9, 2026, 4:33:00 PM",
     source: "t.me/transcendencies/18",
@@ -625,6 +625,8 @@ function fmtK(n){
   if (n >= 1000) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + " K";
   return String(n);
 }
+/* views: число → fmtK ("3.9 K"); строка → как есть ("многа") */
+const fmtViews = (v) => (typeof v === "string" ? v : fmtK(v));
 
 /* --- Аватар-заглушка (SVG data-URI, инициал на тёмном фоне) --- */
 function avatarUri(ch){
@@ -649,7 +651,7 @@ function placeholderFor(p){
     '<text x="400" y="330" font-size="150" text-anchor="middle">' + emoji + '</text>' +
     '<text x="400" y="430" font-size="26" text-anchor="middle" fill="#e2e2e2" font-family="sans-serif">' + esc(short) + '</text>' +
     '<text x="400" y="468" font-size="18" text-anchor="middle" fill="#98a0ad" font-family="sans-serif">заглушка: вставь свою ссылку в поле img</text>' +
-    '<text x="760" y="566" font-size="18" text-anchor="end" fill="#98a0ad" font-family="sans-serif">' + esc(fmtK(p.views)) + ' views</text>' +
+    '<text x="760" y="566" font-size="18" text-anchor="end" fill="#98a0ad" font-family="sans-serif">' + esc(fmtViews(p.views)) + ' views</text>' +
     '</svg>';
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
@@ -825,7 +827,7 @@ function cardHtml(p, big){
       (p.video ? '<span class="card-play">' + icon("play_arrow") + esc(p.video) + "</span>" : "") +
     "</div>" +
     '<div class="card-stats">' +
-      "<span>" + icon("visibility") + fmtK(p.views) + "</span>" +
+      "<span>" + icon("visibility") + fmtViews(p.views) + "</span>" +
       '<span class="stat-like">' + icon("favorite") + fmtK(p.rating) + "</span>" +
       "<span>" + icon("comment") + p.comments.length + "</span>" +
     "</div>" +
@@ -892,7 +894,7 @@ function renderPost(p){
     /* мета */
     '<div class="post-meta">' +
       "<span>published " + esc(p.published) + "</span>" +
-      "<span>" + icon("visibility") + fmtK(p.views) + " views</span>" +
+      "<span>" + icon("visibility") + fmtViews(p.views) + " views</span>" +
     "</div>" +
     '<div class="post-source"><span>' + esc(p.date) + "</span> " + icon("link") +
       '<a href="#" data-toast="Источнику — псевдо-ссылка каркаса">' + esc(p.source) + "</a></div>" +
