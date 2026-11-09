@@ -335,7 +335,6 @@ img{display:block}
 .notif-title{font-size:14px;font-weight:600;color:var(--text)}
 .notif-time{font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px}
 .notif-text{font-size:13px;color:var(--text-secondary);margin-top:2px}
-.site-name .avatar{margin-right:10px}
 .heart-fx{position:fixed;z-index:98;font-size:28px;pointer-events:none;
   animation:heartUp 1s ease-out forwards}
 @keyframes heartUp{
@@ -476,12 +475,7 @@ const SITE = {
   footerTitle: "Transcendencies Vault — карточка для Discord. Раздел 18+ — предупреждение, за ним ничего страшного.",
 };
 
-/* Discord-интеграция (пока ждём is-a.dev): URL вебхука из своего канала Discord.
-   Как сделать: Discord → свой сервер → любой канал → ⚙ → Интеграции → Webhooks
-   → New Webhook → Copy Webhook URL → вставить сюда в кавычки.
-   Тогда каждое «иди нахуй» из футера прилетит и в твой канал Discord.
-   Пусто "" = только уведомления на сайте. Подробности в GUIDE.md. */
-const DISCORD_WEBHOOK = "";
+
 
 const PROFILE = {
   user: "Transcendencies",
@@ -1192,17 +1186,6 @@ function pushNotif(text){
   NOTIFS.unshift({ text: text, when: "now" });
   renderNotifs();
   $("#notif-panel").hidden = false;
-  if (DISCORD_WEBHOOK){
-    fetch(DISCORD_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: "Transcendencies",
-        avatar_url: location.origin + "/avatar.jpg",
-        content: text
-      })
-    }).catch(() => {});
-  }
 }
 $("#notif-btn").addEventListener("click", (e) => {
   e.stopPropagation();
